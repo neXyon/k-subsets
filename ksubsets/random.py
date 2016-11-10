@@ -9,6 +9,7 @@
 # Joerg H. Mueller
 
 from itertools import combinations
+from scipy.misc import comb
 import numpy as np
 
 # --------------------------------------------------------------------
@@ -91,7 +92,7 @@ def random_expectation(n, k, t):
     T = 0
     q = 1
     N = comb(n, k, True)
-    S = comb(t, k, True)
+    S = comb(t, k)
 
     for i in range(1, N + 1):
         p = S/(N - i + 1)

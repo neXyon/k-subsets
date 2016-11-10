@@ -9,9 +9,9 @@
 # Joerg H. Mueller
 
 import numpy as np
-from .algorithms import bits_on_count__32
+from .algorithms import bit_count_32
 
-def score_sequence(seq, n=None, k=None):
+def score_sequence(seq, n=None, k=None, elim_stats=False):
     """
     Scores a sequence according how quickly it discovers scenes.
     The resulting score is the average number of subsets in the sequence
@@ -31,6 +31,8 @@ def score_sequence(seq, n=None, k=None):
     # encode each subset into a single integer
     seq = elem_bit[seq,].reshape(-1,k).sum(axis=1)
 
+    eliminated = np.zeros(len(seq), dtype=np.uint32)
+
     bin_size = 2 ** 28
 
     scene_count = 0
@@ -38,7 +40,7 @@ def score_sequence(seq, n=None, k=None):
 
     for start in range(0, 2**n, bin_size):
         scenes = np.arange(start, min([start + bin_size, 2 ** n]), dtype=np.uint32)
-        nr_true = bits_on_count__32(scenes).astype(np.uint8)
+        nr_true = bit_count_32(scenes).astype(np.uint8)
         # keep only solvable scenes (number of True elements >= k)
         mask = nr_true >= k
         scenes = scenes[mask]
@@ -53,13 +55,15 @@ def score_sequence(seq, n=None, k=None):
 
         seq_iter = seq
 
-        for subset in seq_iter:
+        for subset_index, subset in enumerate(seq_iter):
             ttd += 1
 
             # create Boolean mask of scenes matched by the current subset
-            matched = bits_on_count__32(np.bitwise_and(subset, scenes)) == k
+            matched = bit_count_32(np.bitwise_and(subset, scenes)) == k
             # create histogram of scenes matched for each number of true bits
             nr_matched = np.sum(matched)
+
+            eliminated[subset_index] += nr_matched
 
             ttd__sum += ttd * nr_matched
 
@@ -70,6 +74,9 @@ def score_sequence(seq, n=None, k=None):
 
         if len(scenes) > 0:
             raise ValueError('Sequence not complete.')
+
+    if elim_stats:
+        return ttd__sum / scene_count, eliminated
 
     # calculate the average score
     return ttd__sum / scene_count

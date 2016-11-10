@@ -86,7 +86,7 @@ def colex_uint(n, k):
     """
     v = sum(1 << i for i in range(k))
     yield v
-    for _ in range(comb(n,k) - 1):
+    for _ in range(bin_coef(n,k) - 1):
         t = (v | (v - 1)) + 1
         t = t | ((((t & -t) // (v & -v)) >> 1) - 1)
         yield t
